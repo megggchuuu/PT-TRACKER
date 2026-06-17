@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Achilles Tendon PT Tracker</title>
+  <style>
+    :root {
+      --bg:           #0a0a0f;
+      --bg2:          #0f0f1a;
+      --bg3:          #14142a;
+      --neon-cyan:    #00f5ff;
+      --neon-pink:    #ff007f;
+      --neon-green:   #39ff14;
+      --neon-purple:  #bf00ff;
+      --neon-yellow:  #ffea00;
+      --text:         #e0e0f0;
+      --text-dim:     #7070a0;
+      --border:       #1a1a3a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--neon-cyan);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 0 30px rgba(0,245,255,0.1);
+    }
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    header .sub { font-size: 0.75rem; color: var(--text-dim); margin-top: 3px; letter-spacing: 1px; }
+    .header-icon { font-size: 1.8rem; }
+
+    .container { max-width: 1000px; margin: 0 auto; padding: 20px 18px 60px; }
+
+    /* ── Recovery bar ── */
+    .recovery-bar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: var(--bg2);
+      border: 1px solid var(--neon-purple);
+      border-radius: 12px;
+      padding: 14px 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 0 16px rgba(191,0,255,0.1);
+    }
+    .recovery-item { flex: 1; text-align: center; }
+    .recovery-label { display: block; font-size: 0.68rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+    .recovery-val { display: block; font-size: 1.3rem; font-weight: 800; color: var(--neon-purple); text-shadow: 0 0 8px var(--neon-purple); line-height: 1; }
+    .recovery-week { font-size: 0.75rem; font-weight: 400; opacity: 0.7; }
+    .recovery-date { display: block; font-size: 0.72rem; color: var(--text-dim); margin-top: 3px; }
+    .recovery-divider { width: 1px; background: var(--border); height: 40px; margin: 0 20px; flex-shrink: 0; }
+
+    /* ── Date nav ── */
+    .date-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 18px;
+    }
+    .date-nav button {
+      background: transparent;
+      border: 1px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-family: inherit;
+      font-weight: 600;
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+    .date-nav button:hover { background: rgba(0,245,255,0.1); box-shadow: 0 0 10px var(--neon-cyan); }
+    .date-display {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 8px var(--neon-cyan);
+      min-width: 190px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .date-display input[type="date"] {
+      background: var(--bg3);
+      border: 1px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+    }
+    .today-btn {
+      border-color: var(--neon-purple) !important;
+      color: var(--neon-purple) !important;
+      font-size: 0.78rem !important;
+      padding: 4px 10px !important;
+    }
+    .today-btn:hover { background: rgba(191,0,255,0.1) !important; box-shadow: 0 0 10px var(--neon-purple) !important; }
+
+    /* ── Progress bar ── */
+    .progress-bar-wrap {
+      margin-bottom: 16px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+    }
+    .progress-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .progress-label span { font-size: 0.85rem; color: var(--text-dim); }
+    .progress-label strong { color: var(--neon-green); text-shadow: 0 0 6px var(--neon-green); }
+    .progress-track { background: var(--bg3); border-radius: 99px; height: 9px; overflow: hidden; }
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+      box-shadow: 0 0 8px var(--neon-cyan);
+      transition: width 0.4s ease;
+    }
+
+    /* ── Pain rating ── */
+    .pain-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 16px;
+    }
+    .pain-title { display: block; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; }
+    .pain-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pain-btn {
+      flex: 1;
+      min-width: 52px;
+      background: var(--bg3);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 8px 4px 6px;
+      text-align: center;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+      font-family: inherit;
+    }
+    .pain-btn:hover { border-color: var(--pcol); box-shadow: 0 0 8px var(--pcol); }
+    .pain-btn.pain-active { border-color: var(--pcol); background: rgba(255,255,255,0.05); box-shadow: 0 0 12px var(--pcol); }
+    .pain-num { display: block; font-size: 1.1rem; font-weight: 800; color: var(--pcol); text-shadow: 0 0 6px var(--pcol); }
+    .pain-label { display: block; font-size: 0.65rem; color: var(--text-dim); margin-top: 2px; }
+    .pain-clear { margin-top: 8px; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: inherit;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: box-shadow 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-cyan   { background: transparent; border: 1.5px solid var(--neon-cyan);   color: var(--neon-cyan);   }
+    .btn-cyan:hover   { box-shadow: 0 0 12px var(--neon-cyan);   background: rgba(0,245,255,0.08); }
+    .btn-pink   { background: transparent; border: 1.5px solid var(--neon-pink);   color: var(--neon-pink);   }
+    .btn-pink:hover   { box-shadow: 0 0 12px var(--neon-pink);   background: rgba(255,0,127,0.08); }
+    .btn-green  { background: transparent; border: 1.5px solid var(--neon-green);  color: var(--neon-green);  }
+    .btn-green:hover  { box-shadow: 0 0 12px var(--neon-green);  background: rgba(57,255,20,0.08); }
+    .btn-purple { background: transparent; border: 1.5px solid var(--neon-purple); color: var(--neon-purple); }
+    .btn-purple:hover { box-shadow: 0 0 12px var(--neon-purple); background: rgba(191,0,255,0.08); }
+    .btn-yellow { background: transparent; border: 1.5px solid var(--neon-yellow); color: var(--neon-yellow); }
+    .btn-yellow:hover { box-shadow: 0 0 12px var(--neon-yellow); background: rgba(255,234,0,0.08); }
+    .btn-dim    { background: transparent; border: 1.5px solid #333355;            color: var(--text-dim);    }
+    .btn-dim:hover    { border-color: #555580; color: var(--text); }
+    .btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+    .btn:disabled { opacity: 0.25; cursor: default; pointer-events: none; }
+
+    /* ── Section header ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--neon-pink);
+      text-shadow: 0 0 8px var(--neon-pink);
+    }
+
+    /* ── Exercise cards ── */
+    .exercise-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .ex-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .ex-card.completed { border-color: var(--neon-green); box-shadow: 0 0 14px rgba(57,255,20,0.1); }
+    .ex-card.completed .ex-name { color: var(--neon-green); text-shadow: 0 0 6px var(--neon-green); }
+    .ex-card.archived { opacity: 0.6; border-color: #1e1e38; }
+    .ex-card.archived .ex-name { color: var(--neon-yellow); }
+
+    .ex-header { display: flex; align-items: flex-start; gap: 12px; }
+    .ex-check {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--neon-cyan);
+      cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem;
+      transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+      margin-top: 2px;
+    }
+    .ex-check:hover { box-shadow: 0 0 10px var(--neon-cyan); }
+    .ex-check.checked { background: var(--neon-green); border-color: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); color: #000; }
+
+    .ex-info { flex: 1; min-width: 0; }
+    .ex-name { font-size: 1rem; font-weight: 700; color: var(--neon-cyan); margin-bottom: 6px; }
+    .ex-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+    .meta-chip {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 9px;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+    .meta-chip span { color: var(--text); font-weight: 600; }
+    .ex-notes { font-size: 0.78rem; color: var(--text-dim); font-style: italic; margin-bottom: 6px; }
+    .ex-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .archived-badge { font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; color: var(--neon-yellow); opacity: 0.7; margin-bottom: 4px; }
+
+    /* ── Daily notes ── */
+    .daily-note-preview {
+      font-size: 0.78rem;
+      color: var(--neon-cyan);
+      opacity: 0.7;
+      margin-top: 4px;
+      font-style: italic;
+    }
+    .daily-note-ta {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--neon-cyan);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--text);
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      resize: vertical;
+      min-height: 60px;
+      margin-top: 8px;
+      box-shadow: 0 0 6px rgba(0,245,255,0.15);
+    }
+
+    /* ── Done banner ── */
+    .done-banner {
+      text-align: center;
+      padding: 14px;
+      background: rgba(57,255,20,0.05);
+      border: 1px solid var(--neon-green);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 0 16px rgba(57,255,20,0.1);
+    }
+    .done-banner h3 { color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); font-size: 1.05rem; margin-bottom: 3px; }
+    .done-banner p { font-size: 0.8rem; color: var(--text-dim); }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 10px; opacity: 0.4; }
+    .empty-state p { font-size: 0.88rem; }
+
+    /* ── History ── */
+    .history-section { margin-top: 24px; margin-bottom: 16px; }
+    .history-toggle, .archive-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 11px 16px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      user-select: none;
+      transition: border-color 0.2s;
+    }
+    .history-toggle:hover { border-color: var(--neon-cyan); }
+    .archive-toggle:hover { border-color: var(--neon-yellow); }
+    .history-toggle-label {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--neon-cyan); text-shadow: 0 0 6px var(--neon-cyan); flex: 1;
+    }
+    .archive-toggle-label {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--neon-yellow); text-shadow: 0 0 6px var(--neon-yellow); flex: 1;
+    }
+    .toggle-arrow { color: var(--text-dim); font-size: 0.8rem; transition: transform 0.2s; }
+    .toggle-arrow.open { transform: rotate(90deg); }
+
+    .history-body { margin-top: 12px; }
+
+    /* Calendar */
+    .cal-legend { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+    .cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--text-dim); }
+    .cal-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .cal-dot.cal-full    { background: var(--neon-green); box-shadow: 0 0 4px var(--neon-green); }
+    .cal-dot.cal-partial { background: var(--neon-yellow); box-shadow: 0 0 4px var(--neon-yellow); }
+    .cal-dot.cal-missed  { background: var(--neon-pink); box-shadow: 0 0 4px var(--neon-pink); }
+
+    .cal-months { display: flex; flex-wrap: wrap; gap: 20px; }
+    .cal-month { flex: 1; min-width: 240px; }
+    .cal-month-name { font-size: 0.78rem; font-weight: 700; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; }
+    .cal-week-headers { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 4px; }
+    .cal-wh { text-align: center; font-size: 0.65rem; color: var(--text-dim); padding: 2px 0; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .cal-cell {
+      aspect-ratio: 1;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.15s;
+      background: var(--bg3);
+    }
+    .cal-cell.empty { background: transparent; cursor: default; border: none; }
+    .cal-cell.cal-future { opacity: 0.25; cursor: default; pointer-events: none; }
+    .cal-cell:not(.empty):not(.cal-future):hover { border-color: var(--neon-cyan); }
+    .cal-cell.cal-full    { background: rgba(57,255,20,0.12); border-color: rgba(57,255,20,0.3); }
+    .cal-cell.cal-partial { background: rgba(255,234,0,0.1);  border-color: rgba(255,234,0,0.3); }
+    .cal-cell.cal-missed  { background: rgba(255,0,127,0.08); border-color: rgba(255,0,127,0.2); }
+    .cal-cell.cal-today   { border-color: var(--neon-cyan) !important; box-shadow: 0 0 6px rgba(0,245,255,0.3); }
+    .cal-cell.cal-selected { border-color: var(--neon-purple) !important; box-shadow: 0 0 6px rgba(191,0,255,0.4); }
+    .cal-day { font-size: 0.72rem; color: var(--text); line-height: 1; }
+    .cal-full .cal-day    { color: var(--neon-green); }
+    .cal-partial .cal-day { color: var(--neon-yellow); }
+    .cal-missed .cal-day  { color: var(--neon-pink); }
+    .cal-pain { font-size: 0.45rem; line-height: 1; }
+
+    /* ── Archive section ── */
+    .archive-section { margin-top: 16px; }
+    .archive-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.78);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; padding: 16px;
+    }
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--neon-cyan);
+      box-shadow: 0 0 40px rgba(0,245,255,0.2);
+      border-radius: 14px;
+      padding: 26px 26px 22px;
+      width: 100%; max-width: 520px;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal h2 {
+      font-size: 1rem; color: var(--neon-cyan); text-shadow: 0 0 8px var(--neon-cyan);
+      margin-bottom: 18px; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block; font-size: 0.72rem; color: var(--text-dim);
+      letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%; background: var(--bg3);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 9px 11px; color: var(--text);
+      font-size: 0.9rem; font-family: inherit; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      border-color: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,245,255,0.15);
+    }
+    .form-group textarea { resize: vertical; min-height: 75px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr 1fr; }
+      header h1 { font-size: 1.1rem; }
+      .cal-months { flex-direction: column; }
+    }
+    @media (max-width: 400px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-icon">🦶</div>
+  <div>
+    <h1>Achilles PT Tracker</h1>
+    <div class="sub">Physical Therapy Exercise Log</div>
+  </div>
+</header>
+
+<div class="container">
+  <div id="app"></div>
+</div>
+
+<!-- Exercise modal -->
+<div id="modal-overlay" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <h2 id="modal-title">Add Exercise</h2>
+    <div class="form-group">
+      <label>Exercise Name</label>
+      <input id="f-name" type="text" placeholder="e.g. Eccentric Heel Drop" maxlength="80">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Duration (sec)</label>
+        <input id="f-duration" type="number" min="0" step="1" placeholder="e.g. 30">
+      </div>
+      <div class="form-group">
+        <label>Reps</label>
+        <input id="f-reps" type="number" min="0" placeholder="e.g. 15">
+      </div>
+      <div class="form-group">
+        <label>Sets</label>
+        <input id="f-sets" type="number" min="0" placeholder="e.g. 3">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Exercise Notes</label>
+      <textarea id="f-notes" placeholder="Resistance band level, technique tips…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-pink btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-cyan btn-sm" onclick="saveExercise()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ──────────────────────────────────────────
+   CONSTANTS
+────────────────────────────────────────── */
+const INJURY_DATE  = '2026-04-14';
+const SURGERY_DATE = '2026-04-17';
+
+/* ──────────────────────────────────────────
+   DATA
+   log[date] = { completed: Set<id>, pain: 1-5|null, exNotes: {id: string} }
+────────────────────────────────────────── */
+let exercises = JSON.parse(localStorage.getItem('pt_exercises') || '[]');
+let log       = JSON.parse(localStorage.getItem('pt_log') || '{}');
+
+Object.keys(log).forEach(d => {
+  const v = log[d];
+  if (Array.isArray(v)) {
+    log[d] = { completed: new Set(v), pain: null, exNotes: {} };
+  } else {
+    log[d] = { completed: new Set(v.completed || []), pain: v.pain || null, exNotes: v.exNotes || {} };
+  }
+});
+
+let currentDate        = todayStr();
+let editingId          = null;
+let archiveOpen        = false;
+let historyOpen        = false;
+let sortIncompleteFirst = false;
+let expandedNoteId     = null;
+
+/* ──────────────────────────────────────────
+   HELPERS
+────────────────────────────────────────── */
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getDay(date) {
+  if (!log[date]) return { completed: new Set(), pain: null, exNotes: {} };
+  return log[date];
+}
+
+function ensureDay(date) {
+  if (!log[date]) log[date] = { completed: new Set(), pain: null, exNotes: {} };
+  return log[date];
+}
+
+function savePersist() {
+  localStorage.setItem('pt_exercises', JSON.stringify(exercises));
+  const serial = {};
+  Object.keys(log).forEach(d => {
+    serial[d] = { completed: [...log[d].completed], pain: log[d].pain, exNotes: log[d].exNotes };
+  });
+  localStorage.setItem('pt_log', JSON.stringify(serial));
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function formatDate(str) {
+  const [y, m, d] = str.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[+m - 1]} ${+d}, ${y}`;
+}
+
+function daysSince(dateStr) {
+  const start = new Date(dateStr + 'T00:00:00');
+  const now   = new Date(new Date().toDateString()); // midnight local
+  return Math.floor((now - start) / 86400000);
+}
+
+function painColor(n) {
+  return ['', '#39ff14', '#a0ff00', '#ffea00', '#ff8800', '#ff007f'][n] || '#fff';
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ──────────────────────────────────────────
+   RENDER
+────────────────────────────────────────── */
+function render() {
+  const app      = document.getElementById('app');
+  const dayData  = getDay(currentDate);
+  const active   = exercises.filter(e => !e.archived);
+  const archived = exercises.filter(e => e.archived);
+
+  let sorted = [...active];
+  if (sortIncompleteFirst) {
+    sorted.sort((a, b) => {
+      const ac = dayData.completed.has(a.id) ? 1 : 0;
+      const bc = dayData.completed.has(b.id) ? 1 : 0;
+      return ac - bc;
+    });
+  }
+
+  const done    = active.filter(e => dayData.completed.has(e.id)).length;
+  const total   = active.length;
+  const pct     = total > 0 ? Math.round((done / total) * 100) : 0;
+  const allDone = total > 0 && done === total;
+
+  /* Recovery */
+  const injDays  = daysSince(INJURY_DATE);
+  const surDays  = daysSince(SURGERY_DATE);
+  const injWeeks = Math.floor(injDays / 7);
+  const surWeeks = Math.floor(surDays / 7);
+
+  const recoveryHtml = `
+  <div class="recovery-bar">
+    <div class="recovery-item">
+      <span class="recovery-label">Since Injury</span>
+      <span class="recovery-val">${injDays}d <span class="recovery-week">· Wk ${injWeeks}</span></span>
+      <span class="recovery-date">Apr 14, 2026</span>
+    </div>
+    <div class="recovery-divider"></div>
+    <div class="recovery-item">
+      <span class="recovery-label">Since Surgery</span>
+      <span class="recovery-val">${surDays}d <span class="recovery-week">· Wk ${surWeeks}</span></span>
+      <span class="recovery-date">Apr 17, 2026</span>
+    </div>
+  </div>`;
+
+  /* Date nav */
+  const dateNavHtml = `
+  <div class="date-nav">
+    <button id="btn-prev" type="button">&#8592; Prev</button>
+    <div class="date-display">
+      <span onclick="showDatePicker()" id="date-label">${formatDate(currentDate)}</span>
+      <input type="date" id="date-picker" value="${currentDate}" style="display:none;"
+             onchange="pickDate(this.value)" onblur="hideDatePicker()">
+    </div>
+    <button id="btn-next" type="button">Next &#8594;</button>
+    <button class="btn today-btn" type="button" id="btn-today">Today</button>
+  </div>`;
+
+  /* Progress */
+  const progressHtml = `
+  <div class="progress-bar-wrap">
+    <div class="progress-label">
+      <span>Daily Progress</span>
+      <strong>${done} / ${total} completed &nbsp; ${pct}%</strong>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" style="width:${pct}%"></div>
+    </div>
+  </div>`;
+
+  /* Pain */
+  const painLevels = [
+    {n:1, label:'None',     col:'#39ff14'},
+    {n:2, label:'Mild',     col:'#a0ff00'},
+    {n:3, label:'Moderate', col:'#ffea00'},
+    {n:4, label:'Strong',   col:'#ff8800'},
+    {n:5, label:'Severe',   col:'#ff007f'},
+  ];
+  const painBtns = painLevels.map(l => `
+    <button type="button" class="pain-btn ${dayData.pain === l.n ? 'pain-active' : ''}"
+            style="--pcol:${l.col}" onclick="setPain(${l.n})">
+      <span class="pain-num">${l.n}</span>
+      <span class="pain-label">${l.label}</span>
+    </button>`).join('');
+  const painHtml = `
+  <div class="pain-wrap">
+    <span class="pain-title">Pain Level Today</span>
+    <div class="pain-row">${painBtns}</div>
+    ${dayData.pain ? `<div class="pain-clear"><button class="btn btn-dim btn-sm" onclick="setPain(null)" type="button">Clear pain rating</button></div>` : ''}
+  </div>`;
+
+  /* Done banner */
+  const bannerHtml = allDone ? `
+  <div class="done-banner">
+    <h3>🎉 All Done for Today!</h3>
+    <p>Great work — keep it up for a full recovery.</p>
+  </div>` : '';
+
+  /* Controls */
+  const ctrlHtml = `
+  <div class="section-header">
+    <span class="section-title">Exercises</span>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-sm ${sortIncompleteFirst ? 'btn-cyan' : 'btn-dim'}" onclick="toggleSort()" type="button">
+        ${sortIncompleteFirst ? '✓ Incomplete First' : 'Incomplete First'}
+      </button>
+      <button class="btn btn-purple btn-sm" onclick="openAdd()" type="button">+ Add</button>
+    </div>
+  </div>`;
+
+  /* Exercise list */
+  const exHtml = sorted.length === 0 ? `
+  <div class="empty-state">
+    <div class="empty-icon">🏃</div>
+    <p>No active exercises. Add your PT routine above.</p>
+  </div>` : `
+  <div class="exercise-list">${sorted.map((ex, i) => renderExCard(ex, dayData, i, sorted.length)).join('')}</div>`;
+
+  /* History */
+  const historyHtml = renderHistory(active);
+
+  /* Archive */
+  const archiveHtml = archived.length === 0 ? '' : `
+  <div class="archive-section">
+    <div class="archive-toggle" onclick="toggleArchiveOpen()">
+      <span class="archive-toggle-label">📦 Past Exercises (${archived.length})</span>
+      <span class="toggle-arrow ${archiveOpen ? 'open' : ''}">&#9658;</span>
+    </div>
+    ${archiveOpen ? `<div class="archive-list">${archived.map(ex => renderExCard(ex, dayData, -1, -1)).join('')}</div>` : ''}
+  </div>`;
+
+  app.innerHTML = recoveryHtml + dateNavHtml + progressHtml + painHtml + bannerHtml + ctrlHtml + exHtml + historyHtml + archiveHtml;
+
+  /* Wire date buttons */
+  document.getElementById('btn-prev').addEventListener('click', () => changeDate(-1));
+  document.getElementById('btn-next').addEventListener('click', () => changeDate(1));
+  document.getElementById('btn-today').addEventListener('click', goToday);
+
+  /* Wire daily note textareas (blur to save) */
+  exercises.filter(e => !e.archived).forEach(ex => {
+    const ta = document.getElementById(`dn-${ex.id}`);
+    if (ta) ta.addEventListener('blur', () => saveDailyNote(ex.id, ta.value));
+  });
+}
+
+function renderExCard(ex, dayData, idx, total) {
+  const checked    = dayData.completed.has(ex.id);
+  const dailyNote  = dayData.exNotes[ex.id] || '';
+  const noteOpen   = expandedNoteId === ex.id;
+
+  const chips = [];
+  if (ex.duration) chips.push(`<div class="meta-chip">⏱ <span>${ex.duration} sec</span></div>`);
+  if (ex.reps)     chips.push(`<div class="meta-chip">🔁 <span>${ex.reps} reps</span></div>`);
+  if (ex.sets)     chips.push(`<div class="meta-chip">📦 <span>${ex.sets} sets</span></div>`);
+
+  if (ex.archived) {
+    return `
+    <div class="ex-card archived">
+      <div class="ex-header">
+        <div class="ex-info">
+          <div class="archived-badge">📦 Archived</div>
+          <div class="ex-name">${escHtml(ex.name)}</div>
+          ${chips.length ? `<div class="ex-meta">${chips.join('')}</div>` : ''}
+          ${ex.notes ? `<div class="ex-notes">${escHtml(ex.notes)}</div>` : ''}
+          <div class="ex-actions">
+            <button class="btn btn-cyan btn-sm" onclick="openEdit('${ex.id}')" type="button">Edit</button>
+            <button class="btn btn-green btn-sm" onclick="restoreExercise('${ex.id}')" type="button">Restore</button>
+            <button class="btn btn-pink btn-sm" onclick="deleteExercise('${ex.id}')" type="button">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const isFirst = idx === 0;
+  const isLast  = idx === total - 1;
+
+  return `
+  <div class="ex-card ${checked ? 'completed' : ''}">
+    <div class="ex-header">
+      <div class="ex-check ${checked ? 'checked' : ''}" onclick="toggleComplete('${ex.id}')">
+        ${checked ? '✓' : ''}
+      </div>
+      <div class="ex-info">
+        <div class="ex-name">${escHtml(ex.name)}</div>
+        ${chips.length ? `<div class="ex-meta">${chips.join('')}</div>` : ''}
+        ${ex.notes ? `<div class="ex-notes">${escHtml(ex.notes)}</div>` : ''}
+        ${dailyNote && !noteOpen ? `<div class="daily-note-preview">📝 ${escHtml(dailyNote)}</div>` : ''}
+        ${noteOpen ? `<textarea id="dn-${ex.id}" class="daily-note-ta" placeholder="Today's note for this exercise…" rows="2">${escHtml(dailyNote)}</textarea>` : ''}
+        <div class="ex-actions">
+          <button class="btn btn-dim btn-sm" onclick="moveEx('${ex.id}', -1)" type="button" ${isFirst ? 'disabled' : ''}>↑</button>
+          <button class="btn btn-dim btn-sm" onclick="moveEx('${ex.id}', 1)"  type="button" ${isLast  ? 'disabled' : ''}>↓</button>
+          <button class="btn btn-cyan btn-sm" onclick="openEdit('${ex.id}')" type="button">Edit</button>
+          <button class="btn ${noteOpen || dailyNote ? 'btn-cyan' : 'btn-dim'} btn-sm" onclick="toggleNote('${ex.id}')" type="button">📝 Note</button>
+          <button class="btn btn-yellow btn-sm" onclick="archiveExercise('${ex.id}')" type="button">Archive</button>
+          <button class="btn btn-pink btn-sm" onclick="deleteExercise('${ex.id}')" type="button">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderHistory(active) {
+  const months = recentMonths(3);
+
+  const grids = months.map(({ year, month }) => {
+    const name       = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month];
+    const daysInMon  = new Date(year, month + 1, 0).getDate();
+    const firstDay   = new Date(year, month, 1).getDay();
+    const today      = todayStr();
+
+    const cells = [];
+    for (let i = 0; i < firstDay; i++) cells.push(`<div class="cal-cell empty"></div>`);
+
+    for (let d = 1; d <= daysInMon; d++) {
+      const ds      = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isFuture  = ds > today;
+      const isToday   = ds === today;
+      const isCurrent = ds === currentDate;
+
+      let status = 'none';
+      if (!isFuture && active.length > 0 && log[ds]) {
+        const cnt = active.filter(e => log[ds].completed.has(e.id)).length;
+        if (cnt === active.length) status = 'full';
+        else if (cnt > 0)         status = 'partial';
+        else                      status = 'missed';
+      }
+
+      const pain = log[ds]?.pain;
+
+      cells.push(`
+      <div class="cal-cell cal-${status} ${isToday ? 'cal-today' : ''} ${isCurrent ? 'cal-selected' : ''} ${isFuture ? 'cal-future' : ''}"
+           onclick="jumpToDate('${ds}')">
+        <span class="cal-day">${d}</span>
+        ${pain ? `<span class="cal-pain" style="color:${painColor(pain)}">●</span>` : ''}
+      </div>`);
+    }
+
+    return `
+    <div class="cal-month">
+      <div class="cal-month-name">${name} ${year}</div>
+      <div class="cal-week-headers">${['S','M','T','W','T','F','S'].map(w => `<div class="cal-wh">${w}</div>`).join('')}</div>
+      <div class="cal-grid">${cells.join('')}</div>
+    </div>`;
+  }).join('');
+
+  const legend = `
+  <div class="cal-legend">
+    <span class="cal-legend-item"><span class="cal-dot cal-full"></span> All done</span>
+    <span class="cal-legend-item"><span class="cal-dot cal-partial"></span> Partial</span>
+    <span class="cal-legend-item"><span class="cal-dot cal-missed"></span> Missed</span>
+    <span class="cal-legend-item" style="color:var(--neon-pink);font-size:0.72rem;">● = pain logged</span>
+  </div>`;
+
+  return `
+  <div class="history-section">
+    <div class="history-toggle" onclick="toggleHistory()">
+      <span class="history-toggle-label">📅 History</span>
+      <span class="toggle-arrow ${historyOpen ? 'open' : ''}">&#9658;</span>
+    </div>
+    ${historyOpen ? `<div class="history-body">${legend}<div class="cal-months">${grids}</div></div>` : ''}
+  </div>`;
+}
+
+function recentMonths(n) {
+  const result = [];
+  const now = new Date();
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    result.push({ year: d.getFullYear(), month: d.getMonth() });
+  }
+  return result;
+}
+
+/* ──────────────────────────────────────────
+   DATE ACTIONS
+────────────────────────────────────────── */
+function changeDate(delta) {
+  const d = new Date(currentDate + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  currentDate    = d.toISOString().slice(0, 10);
+  expandedNoteId = null;
+  render();
+}
+
+function goToday()       { currentDate = todayStr(); expandedNoteId = null; render(); }
+function jumpToDate(ds)  { currentDate = ds; expandedNoteId = null; if (historyOpen) render(); else { historyOpen = false; render(); } }
+
+function showDatePicker() {
+  document.getElementById('date-label').style.display = 'none';
+  const p = document.getElementById('date-picker');
+  p.style.display = 'inline-block';
+  p.focus();
+}
+function hideDatePicker() {
+  document.getElementById('date-label').style.display = 'inline';
+  document.getElementById('date-picker').style.display = 'none';
+}
+function pickDate(val) {
+  if (val) currentDate = val;
+  expandedNoteId = null;
+  hideDatePicker();
+  render();
+}
+
+/* ──────────────────────────────────────────
+   EXERCISE ACTIONS
+────────────────────────────────────────── */
+function toggleComplete(id) {
+  const day = ensureDay(currentDate);
+  if (day.completed.has(id)) day.completed.delete(id);
+  else day.completed.add(id);
+  savePersist();
+  render();
+}
+
+function setPain(val) {
+  ensureDay(currentDate).pain = val;
+  savePersist();
+  render();
+}
+
+function toggleNote(id) {
+  expandedNoteId = expandedNoteId === id ? null : id;
+  render();
+}
+
+function saveDailyNote(id, val) {
+  const day = ensureDay(currentDate);
+  day.exNotes[id] = val.trim();
+  savePersist();
+}
+
+function toggleSort()        { sortIncompleteFirst = !sortIncompleteFirst; render(); }
+function toggleHistory()     { historyOpen   = !historyOpen;  render(); }
+function toggleArchiveOpen() { archiveOpen   = !archiveOpen;  render(); }
+
+function moveEx(id, dir) {
+  const active = exercises.filter(e => !e.archived);
+  const idx    = active.findIndex(e => e.id === id);
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= active.length) return;
+  const gi  = exercises.indexOf(active[idx]);
+  const gi2 = exercises.indexOf(active[newIdx]);
+  [exercises[gi], exercises[gi2]] = [exercises[gi2], exercises[gi]];
+  savePersist();
+  render();
+}
+
+/* ──────────────────────────────────────────
+   MODAL
+────────────────────────────────────────── */
+function openAdd() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Add Exercise';
+  ['f-name','f-duration','f-reps','f-sets','f-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('modal-overlay').style.display = 'flex';
+  document.getElementById('f-name').focus();
+}
+
+function openEdit(id) {
+  const ex = exercises.find(e => e.id === id);
+  if (!ex) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Edit Exercise';
+  document.getElementById('f-name').value     = ex.name;
+  document.getElementById('f-duration').value = ex.duration ?? '';
+  document.getElementById('f-reps').value     = ex.reps ?? '';
+  document.getElementById('f-sets').value     = ex.sets ?? '';
+  document.getElementById('f-notes').value    = ex.notes ?? '';
+  document.getElementById('modal-overlay').style.display = 'flex';
+  document.getElementById('f-name').focus();
+}
+
+function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+function saveExercise() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { document.getElementById('f-name').focus(); return; }
+  const duration = parseFloat(document.getElementById('f-duration').value) || null;
+  const reps     = parseInt(document.getElementById('f-reps').value)       || null;
+  const sets     = parseInt(document.getElementById('f-sets').value)       || null;
+  const notes    = document.getElementById('f-notes').value.trim()         || null;
+
+  if (editingId) {
+    const ex = exercises.find(e => e.id === editingId);
+    if (ex) Object.assign(ex, { name, duration, reps, sets, notes });
+  } else {
+    exercises.push({ id: uid(), name, duration, reps, sets, notes, archived: false });
+  }
+  savePersist();
+  closeModal();
+  render();
+}
+
+/* ──────────────────────────────────────────
+   ARCHIVE / RESTORE / DELETE
+────────────────────────────────────────── */
+function archiveExercise(id) {
+  const ex = exercises.find(e => e.id === id);
+  if (ex) ex.archived = true;
+  savePersist();
+  render();
+}
+
+function restoreExercise(id) {
+  const ex = exercises.find(e => e.id === id);
+  if (ex) ex.archived = false;
+  savePersist();
+  render();
+}
+
+function deleteExercise(id) {
+  if (!confirm('Permanently delete this exercise? This cannot be undone.')) return;
+  exercises = exercises.filter(e => e.id !== id);
+  Object.keys(log).forEach(d => log[d].completed.delete(id));
+  savePersist();
+  render();
+}
+
+/* ──────────────────────────────────────────
+   CONFIRM BEFORE LEAVING
+────────────────────────────────────────── */
+window.addEventListener('beforeunload', e => {
+  const active  = exercises.filter(ex => !ex.archived);
+  const dayData = getDay(todayStr());
+  const done    = active.filter(ex => dayData.completed.has(ex.id)).length;
+  if (active.length > 0 && done < active.length) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+/* ──────────────────────────────────────────
+   KEYBOARD
+────────────────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && document.getElementById('modal-overlay').style.display !== 'none') {
+    if (e.target.tagName !== 'TEXTAREA') { e.preventDefault(); saveExercise(); }
+  }
+});
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+/* ──────────────────────────────────────────
+   BOOT
+────────────────────────────────────────── */
+render();
+</script>
+</body>
+</html>
